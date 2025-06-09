@@ -64,7 +64,7 @@ uv run video-downloader
 配置文件 `config.toml`:
 ```toml
 [mqtt]
-MQTT_BROKER = "mqtt.idev.top"
+MQTT_BROKER = "mqtt.eclipseprojects.io"
 MQTT_PORT = 1883
 QOS_LEVEL = 0
 MQTT_TOPIC_SUBSCRIBE = "video/download/request"

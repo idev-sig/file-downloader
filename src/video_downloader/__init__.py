@@ -49,10 +49,11 @@ def on_message(client, userdata, msg):
         
         filename = name or "video_" + str(int(time.time()))
         output_path = os.path.join(config['DOWNLOAD_DIR'], filename)
-        download_url = config['DOWNLOAD_PREFIX_URL'] + filename + ".mp4"
+        download_url = f"{config['DOWNLOAD_PREFIX_URL']}{filename}.mp4"
 
         # 下载视频
         video_path = download_video(url, output_path)
+        # video_path = output_path
         
         if video_path:
             # 发布下载完成消息
@@ -65,7 +66,7 @@ def on_message(client, userdata, msg):
                 "timestamp": int(time.time())
             }
             # 从 userdata 获取配置
-            config = userdata            
+            config = userdata           
             client.publish(config['MQTT_TOPIC_PUBLISH'], json.dumps(complete_msg), qos=config['QOS_LEVEL'])
             logging.info(f"Published completion message for {url}")
         else:
@@ -76,7 +77,7 @@ def on_message(client, userdata, msg):
                 "message": "Failed to download video",
                 "timestamp": int(time.time())
             }
-            client.publish(config['MQTT_TOPIC_PUBLISH'], json.dumps(error_msg))
+            client.publish(config['MQTT_TOPIC_PUBLISH'], json.dumps(error_msg), qos=config['QOS_LEVEL'])
             logging.info(f"Published error message for {url}")
             
     except Exception as e:
@@ -157,7 +158,9 @@ def main():
     QOS_LEVEL = config['QOS_LEVEL']
     MQTT_TOPIC_SUBSCRIBE = config['MQTT_TOPIC_SUBSCRIBE']
     MQTT_TOPIC_PUBLISH = config['MQTT_TOPIC_PUBLISH']
-    MQTT_CLIENT_ID = config['MQTT_CLIENT_ID']
+    # yymmddhhiiss
+    nowTime = time.strftime("_%y%m%d%H%M%S", time.localtime())
+    MQTT_CLIENT_ID = config['MQTT_CLIENT_ID'] + nowTime
     DOWNLOAD_DIR = config['DOWNLOAD_DIR']
     DOWNLOAD_PREFIX_URL=config['DOWNLOAD_PREFIX_URL']
 
