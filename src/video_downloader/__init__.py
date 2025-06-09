@@ -177,6 +177,9 @@ def main():
     DOWNLOAD_DIR = config['DOWNLOAD_DIR']
     DOWNLOAD_PREFIX_URL=config['DOWNLOAD_PREFIX_URL']
 
+    MQTT_USERNAME = config.get('MQTT_USERNAME', None)
+    MQTT_PASSWORD = config.get('MQTT_PASSWORD', None)
+
     # 确保下载目录存在
     if not os.path.exists(DOWNLOAD_DIR):
         os.makedirs(DOWNLOAD_DIR)    
@@ -197,6 +200,13 @@ def main():
 
     # 创建MQTT客户端
     mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=MQTT_CLIENT_ID, userdata=config)
+    mqttc.reconnect_delay_set(min_delay=1, max_delay=120)
+
+# 设置用户名和密码
+    if MQTT_USERNAME and MQTT_PASSWORD:
+        mqttc.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+        logging.info(f"Using MQTT authentication: username={MQTT_USERNAME}")
+
     mqttc.on_log = on_log
     mqttc.on_connect = on_connect
     mqttc.on_message = on_message    

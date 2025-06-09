@@ -2,14 +2,14 @@
 
 ## 先决条件
 1. 安装 [uv](https://github.com/astral-sh/uv)。 
-```bash
-# On macOS and Linux.
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
+    ```bash
+    # On macOS and Linux.
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
 2. 安装 [`m3u8-downloader`](https://github.com/forkdo/m3u8-downloader)。
-```bash
-curl -L https://s.fx4.cn/m3u8-downloader | bash
-```
+    ```bash
+    curl -L https://s.fx4.cn/m3u8-downloader | bash
+    ```
 
 ## 安装
 
@@ -25,34 +25,35 @@ curl -L https://s.fx4.cn/m3u8-downloader | bash
    
 ## 使用
 1. 启动 MQTT 服务器
+    > EMQX 配置客户端认证功能：访问控制 -> 客户端认证 -> 创建 -> Password-Based -> 内置数据库 -> 键入“用户名、密码” -> 保存。
 2. 启动本服务
-```bash
-uv sync
-. .venv/bin/activate
-uv run video-downloader
-```
+    ```bash
+    uv sync
+    . .venv/bin/activate
+    uv run video-downloader
+    ```
 3. 使用客户端，发布消息（`JSON`）到主题 `video/download/request`，格式如下：   
 建议 `QOS` 为 `0`, `retain` 为 `false`。若 `retain` 为 `true`，则消息会被保留，直到有新的消息发布到相同的主题。会导致重启服务器后，重复下载相同的文件。
-```bash
-{
-  "url": "https://test.com/50941.m3u8",
-  "name": "testtest"
-}
-```
-若忽略 `name`，则会生成随机文件名。
+    ```bash
+    {
+      "url": "https://test.com/50941.m3u8",
+      "name": "testtest"
+    }
+    ```
+    若忽略 `name`，则会生成随机文件名。
 
-4. 等待下载完成
+4. 等待下载完成   
 下载完成后，会发布消息到主题 `video/download/complete`，格式如下：
-```json
-{
-  "status": "success",
-  "url": "https://test.com/wmfx.m3u8",
-  "name": "video_1749464069",
-  "file_path": "downloads/video_1749464069",
-  "download_url": "http://127.0.0.1:3000/video_1749464069.mp4",
-  "timestamp": 1749464116
-}
-```
+    ```json
+    {
+      "status": "success",
+      "url": "https://test.com/wmfx.m3u8",
+      "name": "video_1749464069",
+      "file_path": "downloads/video_1749464069",
+      "download_url": "http://127.0.0.1:3000/video_1749464069.mp4",
+      "timestamp": 1749464116
+    }
+    ```
 
 ## 配置
 
@@ -72,6 +73,8 @@ MQTT_TOPIC_PUBLISH = "video/download/complete"
 MQTT_CLIENT_ID = "video_downloader_client"
 DOWNLOAD_DIR = "downloads"
 DOWNLOAD_PREFIX_URL = ""
+MQTT_USERNAME = ""
+MQTT_PASSWORD = ""
 ```
 
 - **DOWNLOAD_PREFIX_URL** 用于替换下载文件的 URL 前缀。   

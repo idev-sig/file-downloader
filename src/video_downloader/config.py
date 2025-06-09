@@ -1,6 +1,10 @@
 import os
 import toml
 import argparse
+import logging
+
+# 配置日志
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def load_config():
     """加载配置，优先级：命令行参数 > 配置文件 > 环境变量 > 默认值"""
@@ -13,57 +17,82 @@ def load_config():
         'MQTT_TOPIC_PUBLISH': 'video/download/complete',
         'MQTT_CLIENT_ID': 'video_downloader_client',
         'DOWNLOAD_DIR': 'downloads',
-        "DOWNLOAD_PREFIX_URL": "",
+        'DOWNLOAD_PREFIX_URL': '',
+        'MQTT_USERNAME': None,
+        'MQTT_PASSWORD': None
     }
 
-    # 初始化配置为默认值
+    # 初始化配置
     config = default_config.copy()
 
-    # 1. 获取环境变量（最低优先级）
+    # 1. 加载环境变量（最低优先级）
     for key in default_config:
         env_value = os.getenv(key)
         if env_value is not None:
-            # 对端口和QoS级别进行类型转换
-            if key == 'MQTT_PORT' or key == 'QOS_LEVEL':
-                try:
-                    config[key] = int(env_value)
-                except ValueError:
-                    print(f"警告: 无效的环境变量 {key}: {env_value}")
-            else:
-                config[key] = env_value
+            try:
+                if key in ('MQTT_PORT', 'QOS_LEVEL'):
+                    config[key] = int(env_value)  # 类型转换
+                else:
+                    config[key] = env_value
+                logging.debug(f"Loaded {key} from environment: {env_value}")
+            except ValueError as e:
+                logging.warning(f"Invalid environment variable {key}: {env_value}, error: {e}")
 
     # 2. 加载配置文件（覆盖环境变量）
     config_file = 'config.toml'
     if os.path.exists(config_file):
         try:
-            with open(config_file, 'r') as f:
+            with open(config_file, 'r', encoding='utf-8') as f:
                 file_config = toml.load(f)
-                # 更新配置，使用大写键名直接从 [mqtt] 部分获取
-                mqtt_section = file_config.get('mqtt', {})
-                for key in default_config:
-                    if key in mqtt_section:
-                        config[key] = mqtt_section[key]
+            mqtt_section = file_config.get('mqtt', {})
+            for key in default_config:
+                if key in mqtt_section:
+                    try:
+                        if key in ('MQTT_PORT', 'QOS_LEVEL'):
+                            config[key] = int(mqtt_section[key])  # 类型转换
+                        else:
+                            config[key] = mqtt_section[key]
+                        logging.debug(f"Loaded {key} from config file: {mqtt_section[key]}")
+                    except ValueError as e:
+                        logging.warning(f"Invalid value for {key} in {config_file}: {mqtt_section[key]}, error: {e}")
         except Exception as e:
-            print(f"警告: 无法加载配置文件 {config_file}: {e}")
+            logging.error(f"Failed to load config file {config_file}: {e}")
 
     # 3. 解析命令行参数（最高优先级）
     parser = argparse.ArgumentParser(description='Video Downloader MQTT Client')
     parser.add_argument('--mqtt-broker', help='MQTT Broker address')
     parser.add_argument('--mqtt-port', type=int, help='MQTT Broker port')
-    parser.add_argument('--qos-level', type=int, help='QoS level')
+    parser.add_argument('--qos-level', type=int, help='QoS level (0, 1, or 2)')
     parser.add_argument('--subscribe-topic', help='MQTT subscribe topic')
     parser.add_argument('--publish-topic', help='MQTT publish topic')
     parser.add_argument('--client-id', help='MQTT client ID')
     parser.add_argument('--download-dir', help='Download directory')
     parser.add_argument('--download-prefix-url', help='Download prefix URL')
-    
+    parser.add_argument('--mqtt-username', help='MQTT username for authentication')
+    parser.add_argument('--mqtt-password', help='MQTT password for authentication')
+
     args = parser.parse_args()
 
     # 更新配置
     for key in default_config:
-        arg_key = key.lower().replace('-', '_')
+        arg_key = key.lower().replace('-', '_')  # 将大写下划线转换为小写连字符
         arg_value = getattr(args, arg_key, None)
         if arg_value is not None:
-            config[key] = arg_value
+            try:
+                config[key] = arg_value
+                logging.debug(f"Loaded {key} from command line: {arg_value}")
+            except ValueError as e:
+                logging.warning(f"Invalid command-line argument {arg_key}: {arg_value}, error: {e}")
+
+    # 验证配置
+    if config['QOS_LEVEL'] not in (0, 1, 2):
+        logging.warning(f"Invalid QOS_LEVEL: {config['QOS_LEVEL']}, defaulting to 0")
+        config['QOS_LEVEL'] = 0
+    if config['MQTT_PORT'] <= 0 or config['MQTT_PORT'] > 65535:
+        logging.warning(f"Invalid MQTT_PORT: {config['MQTT_PORT']}, defaulting to 1883")
+        config['MQTT_PORT'] = 1883
+    if not config['DOWNLOAD_DIR']:
+        logging.warning("Invalid DOWNLOAD_DIR, defaulting to 'downloads'")
+        config['DOWNLOAD_DIR'] = 'downloads'
 
     return config
