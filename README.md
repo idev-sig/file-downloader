@@ -6,10 +6,11 @@
     # On macOS and Linux.
     curl -LsSf https://astral.sh/uv/install.sh | sh
     ```
-2. 安装 [`m3u8-downloader`](https://github.com/forkdo/m3u8-downloader)。
+2. 安装 [`m3u8-downloader`](https://github.com/forkdo/m3u8-downloader)（下载至服务器）。
     ```bash
     curl -L https://s.fx4.cn/m3u8-downloader | bash
     ```
+3. 安装 [aria2c](https://github.com/aria2/aria2)（下载至本地客户端）。
 
 ## 安装
 
@@ -53,6 +54,14 @@
       "download_url": "http://127.0.0.1:3000/video_1749464069.mp4",
       "timestamp": 1749464116
     }
+    ```
+
+5. 同步下载到本地客户端   
+  当服务器端下载 M3U8 视频，且合并为 MP4 视频后，本地客户端同步下载至本地。
+    ```bash
+    uv sync
+    . .venv/bin/activate
+    uv run video-puller    
     ```
 
 ## 配置

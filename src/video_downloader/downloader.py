@@ -8,6 +8,10 @@ import time
 import logging
 from .config import load_config
 
+"""
+下载到云端服务器
+"""
+
 def on_connect(client, userdata, flags, rc, *args, **kwargs):
     """MQTT 连接回调函数，兼容 MQTT 3.1/3.1.1 和 5.0"""
     logging.info(f"Connected to MQTT broker with result code {rc}")
@@ -114,7 +118,10 @@ def is_valid_m3u8_url(url):
         return False
 
 def download_video(url, output_path):
-    """使用命令行工具下载视频"""
+    """
+    使用命令行工具下载视频
+    依赖 m3u8-downloader
+    """
     try:
         # 你可以根据需要修改命令
         command = [
@@ -152,12 +159,20 @@ def on_log(client, userdata, paho_log_level, messages):
 
 def setup_logging():
     """配置日志记录"""
+
+    # 确保下载目录存在
+    log_path = "logs"
+    if not os.path.exists(log_path):
+        os.makedirs(log_path)   
+
+    output_path = os.path.join(log_path, 'video_downloader.log')
+
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
         # format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler("video_downloader.log"),
+            logging.FileHandler(output_path),
             logging.StreamHandler()
         ]
     )
@@ -172,8 +187,8 @@ def main():
     MQTT_TOPIC_SUBSCRIBE = config['MQTT_TOPIC_SUBSCRIBE']
     MQTT_TOPIC_PUBLISH = config['MQTT_TOPIC_PUBLISH']
     # yymmddhhiiss
-    nowTime = time.strftime("_%y%m%d%H%M%S", time.localtime())
-    MQTT_CLIENT_ID = config['MQTT_CLIENT_ID'] + nowTime
+    suffix = time.strftime("_%y%m%d%H%M%S", time.localtime())
+    MQTT_CLIENT_ID = config['MQTT_CLIENT_ID'] + suffix
     DOWNLOAD_DIR = config['DOWNLOAD_DIR']
     DOWNLOAD_PREFIX_URL=config['DOWNLOAD_PREFIX_URL']
 
