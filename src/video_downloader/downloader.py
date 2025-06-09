@@ -187,7 +187,7 @@ def main():
     MQTT_TOPIC_SUBSCRIBE = config['MQTT_TOPIC_SUBSCRIBE']
     MQTT_TOPIC_PUBLISH = config['MQTT_TOPIC_PUBLISH']
     # yymmddhhiiss
-    suffix = time.strftime("_%y%m%d%H%M%S", time.localtime())
+    suffix = time.strftime("_downloader_%y%m%d%H%M%S", time.localtime())
     MQTT_CLIENT_ID = config['MQTT_CLIENT_ID'] + suffix
     DOWNLOAD_DIR = config['DOWNLOAD_DIR']
     DOWNLOAD_PREFIX_URL=config['DOWNLOAD_PREFIX_URL']
