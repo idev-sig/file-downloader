@@ -66,9 +66,15 @@ def on_message(client, userdata, msg):
                 "timestamp": int(time.time())
             }
             # 从 userdata 获取配置
-            config = userdata           
-            client.publish(config['MQTT_TOPIC_PUBLISH'], json.dumps(complete_msg), qos=config['QOS_LEVEL'])
-            logging.info(f"Published completion message for {url}")
+            result = client.publish(
+                config['MQTT_TOPIC_PUBLISH'], 
+                json.dumps(complete_msg, ensure_ascii=False), 
+                qos=config['QOS_LEVEL']
+            )
+            if result.rc == mqtt.MQTT_ERR_SUCCESS:
+                logging.info(f"Published completion message for {url}")
+            else:
+                logging.error(f"Failed to publish completion message: {result.rc}")
         else:
             error_msg = {
                 "status": "error",
@@ -77,8 +83,15 @@ def on_message(client, userdata, msg):
                 "message": "Failed to download video",
                 "timestamp": int(time.time())
             }
-            client.publish(config['MQTT_TOPIC_PUBLISH'], json.dumps(error_msg), qos=config['QOS_LEVEL'])
-            logging.info(f"Published error message for {url}")
+            result = client.publish(
+                config['MQTT_TOPIC_PUBLISH'],
+                json.dumps(error_msg, ensure_ascii=False),
+                qos=config['QOS_LEVEL']
+            )
+            if result.rc == mqtt.MQTT_ERR_SUCCESS:
+                logging.info(f"Published error message for {url}")
+            else:
+                logging.error(f"Failed to publish error message: {result.rc}")
             
     except Exception as e:
         logging.error(f"Error processing message: {str(e)}")
@@ -188,15 +201,17 @@ def main():
     mqttc.on_connect = on_connect
     mqttc.on_message = on_message    
 
-    # 连接MQTT服务器
     try:
-        mqttc.connect(MQTT_BROKER, MQTT_PORT, 60)
+        mqttc.connect(MQTT_BROKER, MQTT_PORT, keepalive=300)  # 增加 keepalive
+        logging.info(f"Connecting to MQTT broker: {MQTT_BROKER}:{MQTT_PORT}")
+        mqttc.loop_start()  # 在后台线程运行 MQTT 循环
+        while True:
+            time.sleep(1)  # 主线程保持运行
     except Exception as e:
-        logging.error(f"Failed to connect to MQTT broker: {str(e)}")
-        return
-    
-    # 保持连接
-    mqttc.loop_forever()    
+        logging.error(f"Failed to connect or run MQTT client: {e}")
+        raise
+    finally:
+        mqttc.loop_stop()  # 停止后台循环 
 
 if __name__ == "__main__":
     print("Starting MQTT video downloader client...")
