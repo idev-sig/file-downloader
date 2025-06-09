@@ -1,0 +1,16 @@
+[project]
+name = "video-downloader"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "paho-mqtt>=2.1.0",
+    "toml>=0.10.2",
+]
+
+[project.scripts]
+video-downloader = "video_downloader:main"
+
+[tool.uv]
+package = true
