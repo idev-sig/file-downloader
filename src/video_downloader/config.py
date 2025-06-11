@@ -13,6 +13,7 @@ def load_config():
         'MQTT_BROKER': 'test.mosquitto.org',
         'MQTT_PORT': 1883,
         'QOS_LEVEL': 0,
+        'KEEPALIVE': 60,
         'MQTT_TOPIC_SUBSCRIBE': 'video/download/request',
         'MQTT_TOPIC_PUBLISH': 'video/download/complete',
         'MQTT_CLIENT_ID': 'video_downloader_client',
@@ -63,6 +64,7 @@ def load_config():
     parser.add_argument('--mqtt-broker', help='MQTT Broker address')
     parser.add_argument('--mqtt-port', type=int, help='MQTT Broker port')
     parser.add_argument('--qos-level', type=int, help='QoS level (0, 1, or 2)')
+    parser.add_argument('--keepalive', type=int, help='MQTT Keepalive interval')
     parser.add_argument('--subscribe-topic', help='MQTT subscribe topic')
     parser.add_argument('--publish-topic', help='MQTT publish topic')
     parser.add_argument('--client-id', help='MQTT client ID')

@@ -184,6 +184,7 @@ def main():
     MQTT_BROKER = config['MQTT_BROKER']
     MQTT_PORT = config['MQTT_PORT']
     QOS_LEVEL = config['QOS_LEVEL']
+    KEEPALIVE = config['KEEPALIVE']
     MQTT_TOPIC_SUBSCRIBE = config['MQTT_TOPIC_SUBSCRIBE']
     MQTT_TOPIC_PUBLISH = config['MQTT_TOPIC_PUBLISH']
     # yymmddhhiiss
@@ -227,7 +228,7 @@ def main():
     mqttc.on_message = on_message    
 
     try:
-        mqttc.connect(MQTT_BROKER, MQTT_PORT, keepalive=300)  # 增加 keepalive
+        mqttc.connect(MQTT_BROKER, MQTT_PORT, keepalive=KEEPALIVE)  # 增加 keepalive
         logging.info(f"Connecting to MQTT broker: {MQTT_BROKER}:{MQTT_PORT}")
         mqttc.loop_start()  # 在后台线程运行 MQTT 循环
         while True:

@@ -2,6 +2,7 @@
 MQTT_BROKER = "broker.emqx.io"
 MQTT_PORT = 1883
 QOS_LEVEL = 2
+KEEPALIVE = 60
 MQTT_TOPIC_SUBSCRIBE = "video/download/request"
 MQTT_TOPIC_PUBLISH = "video/download/complete"
 MQTT_CLIENT_ID = "video"
