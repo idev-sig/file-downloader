@@ -1,0 +1,4 @@
+services:
+  video-downloader:
+    env_file:
+    - ./.env

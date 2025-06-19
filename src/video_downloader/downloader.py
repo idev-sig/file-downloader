@@ -204,7 +204,8 @@ def main():
     setup_logging()
 
     # 这里添加你的 MQTT 客户端逻辑
-    print("Configuration loaded:")
+    print()
+    print("::Configuration loaded::")
     print(f"MQTT Broker: {MQTT_BROKER}:{MQTT_PORT}")
     print(f"QoS Level: {QOS_LEVEL}")
     print(f"Subscribe Topic: {MQTT_TOPIC_SUBSCRIBE}")

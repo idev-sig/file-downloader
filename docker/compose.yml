@@ -1,0 +1,13 @@
+services:
+  video-downloader:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+      args:
+        UV_DEFAULT_INDEX: "https://mirrors.huaweicloud.com/repository/pypi/simple"
+        GITHUB_PROXY: "https://fastfile.asfd.cn/"
+    # image: video-downloader:local
+    container_name: video-downloader
+    restart: unless-stopped
+    volumes:
+      - ./downloads:/app/downloads

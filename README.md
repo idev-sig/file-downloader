@@ -25,12 +25,13 @@
    ```
    
 ## 使用
+
+### 基于源码部署
 1. 启动 MQTT 服务器
     > EMQX 配置客户端认证功能：访问控制 -> 客户端认证 -> 创建 -> Password-Based -> 内置数据库 -> 键入“用户名、密码” -> 保存。
 2. 启动本服务
     ```bash
     uv sync
-    . .venv/bin/activate
     uv run video-downloader
     ```
 3. 使用客户端，发布消息（`JSON`）到主题 `video/download/request`，格式如下：   
@@ -60,9 +61,36 @@
   当服务器端下载 M3U8 视频，且合并为 MP4 视频后，本地客户端同步下载至本地。
     ```bash
     uv sync
-    . .venv/bin/activate
     uv run video-puller    
     ```
+
+### 基于 Docker 部署
+
+- 自构建
+    ```bash
+    # 构建 
+    docker buildx bake
+
+    # 运行
+    docker run -d -v $(pwd)/downloads:/app/downloads --name video-downloader video-downloader:local
+
+    # 使用环境变量
+    docker run -d -v $(pwd)/downloads:/app/downloads -e DOWNLOAD_PREFIX_URL="http://127.0.0.1:8080/" --name video-downloader video-downloader:local
+    ```
+
+- 基于 Docker Compose
+使用 [**`Docker Compose`**](docker/README.md) 部署，请查阅 `docker/README.md`。
+
+- 使用项目提供的 Docker 镜像
+
+    > **版本：** `latest`, `main`, <`TAG`>
+
+    | Registry                                                                                   | Image                                                  |
+    | ------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
+    | [**Docker Hub**](https://hub.docker.com/r/idevsig/video-downloader/)                                | `idevsig/video-downloader`                                    |
+    | [**GitHub Container Registry**](https://github.com/idevsig/video-downloader/pkgs/container/video-downloader) | `ghcr.io/idevsig/video-downloader`                            |
+    | **Tencent Cloud Container Registry**                                                       | `ccr.ccs.tencentyun.com/idevsig/video-downloader`             |
+    | **Aliyun Container Registry**                                                              | `registry.cn-guangzhou.aliyuncs.com/idevsig/video-downloader` |
 
 ## 配置
 

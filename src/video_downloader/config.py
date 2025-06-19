@@ -1,10 +1,6 @@
 import os
 import toml
 import argparse
-import logging
-
-# 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def load_config():
     """加载配置，优先级：命令行参数 > 配置文件 > 环境变量 > 默认值"""
@@ -31,13 +27,13 @@ def load_config():
         env_value = os.getenv(key)
         if env_value is not None:
             try:
-                if key in ('MQTT_PORT', 'QOS_LEVEL'):
+                if key in ('MQTT_PORT', 'QOS_LEVEL', 'KEEPALIVE'):
                     config[key] = int(env_value)  # 类型转换
                 else:
                     config[key] = env_value
-                logging.debug(f"Loaded {key} from environment: {env_value}")
+                print(f"Loaded {key} from environment: {env_value}")
             except ValueError as e:
-                logging.warning(f"Invalid environment variable {key}: {env_value}, error: {e}")
+                print(f"Invalid environment variable {key}: {env_value}, error: {e}")
 
     # 2. 加载配置文件（覆盖环境变量）
     config_file = 'config.toml'
@@ -53,11 +49,11 @@ def load_config():
                             config[key] = int(mqtt_section[key])  # 类型转换
                         else:
                             config[key] = mqtt_section[key]
-                        logging.debug(f"Loaded {key} from config file: {mqtt_section[key]}")
+                        print(f"Loaded {key} from config file: {mqtt_section[key]}")
                     except ValueError as e:
-                        logging.warning(f"Invalid value for {key} in {config_file}: {mqtt_section[key]}, error: {e}")
+                        print(f"Invalid value for {key} in {config_file}: {mqtt_section[key]}, error: {e}")
         except Exception as e:
-            logging.error(f"Failed to load config file {config_file}: {e}")
+            print(f"Failed to load config file {config_file}: {e}")
 
     # 3. 解析命令行参数（最高优先级）
     parser = argparse.ArgumentParser(description='Video Downloader MQTT Client')
@@ -82,19 +78,19 @@ def load_config():
         if arg_value is not None:
             try:
                 config[key] = arg_value
-                logging.debug(f"Loaded {key} from command line: {arg_value}")
+                print(f"Loaded {key} from command line: {arg_value}")
             except ValueError as e:
-                logging.warning(f"Invalid command-line argument {arg_key}: {arg_value}, error: {e}")
+                print(f"Invalid command-line argument {arg_key}: {arg_value}, error: {e}")
 
     # 验证配置
     if config['QOS_LEVEL'] not in (0, 1, 2):
-        logging.warning(f"Invalid QOS_LEVEL: {config['QOS_LEVEL']}, defaulting to 0")
+        print(f"Invalid QOS_LEVEL: {config['QOS_LEVEL']}, defaulting to 0")
         config['QOS_LEVEL'] = 0
     if config['MQTT_PORT'] <= 0 or config['MQTT_PORT'] > 65535:
-        logging.warning(f"Invalid MQTT_PORT: {config['MQTT_PORT']}, defaulting to 1883")
+        print(f"Invalid MQTT_PORT: {config['MQTT_PORT']}, defaulting to 1883")
         config['MQTT_PORT'] = 1883
     if not config['DOWNLOAD_DIR']:
-        logging.warning("Invalid DOWNLOAD_DIR, defaulting to 'downloads'")
+        print("Invalid DOWNLOAD_DIR, defaulting to 'downloads'")
         config['DOWNLOAD_DIR'] = 'downloads'
 
     return config

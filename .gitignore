@@ -12,6 +12,7 @@ wheels/
 # IDE-specific files
 .idea/
 .vscode/
+.marscode/
 
 # movie files
 movie/
