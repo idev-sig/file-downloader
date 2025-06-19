@@ -21,6 +21,7 @@ RUN apt-get update -y && \
     apt-get install -y curl
 
 RUN --mount=type=cache,target=/root/.cache/uv \
+    uv lock --no-upgrade && \
     uv sync --locked --no-install-project --no-editable && \
     uv pip install .
 

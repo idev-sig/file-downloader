@@ -27,6 +27,7 @@ target "_common" {
     context = "."
     dockerfile = "docker/Dockerfile"
     platforms = ["linux/amd64"]
+    no-cache = true
 }
 
 target "default" {
