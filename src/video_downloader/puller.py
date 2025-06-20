@@ -1,11 +1,12 @@
+import aria2p
 import paho.mqtt.client as mqtt
 import json
 import re
 import subprocess
-import os
 from urllib.parse import urlparse
 import time
 import logging
+from .logger import setup_logging
 from .config import load_config
 
 """
@@ -30,7 +31,6 @@ def on_message(client, userdata, msg):
     try:
         # 解析消息内容
         payload = msg.payload.decode('utf-8')
-        name = None
         logging.info(f"Received message: {payload}")
         
         # 尝试解析为JSON
@@ -51,8 +51,10 @@ def on_message(client, userdata, msg):
             
         logging.info(f"Download URL: {download_url}")
 
+        # 从 userdata 获取配置
+        config = userdata
         # 下载视频
-        download_video(download_url)
+        download_video(download_url, config)
             
     except Exception as e:
         logging.error(f"Error processing message: {str(e)}")
@@ -74,16 +76,52 @@ def is_valid_mp4_url(url):
     except ValueError:
         return False
 
-def download_video(download_url):
+def download_video(download_url, config):
+    """
+    下载视频
+    """
+    if config['ARIA2_RPC_ENABLE']:
+        download_video_aria2_rpc(download_url, config)
+    else:
+        download_video_cmd(download_url, config)
+
+def download_video_aria2_rpc(download_url, config):
+    """
+    使用 aria2 RPC 下载视频
+    """
+    logging.info(f"Downloading video using aria2 RPC: {download_url}")
+    try:
+        aria2 = aria2p.API(
+            aria2p.Client(
+                host=config['ARIA2_RPC_HOST'],
+                port=config['ARIA2_RPC_PORT'],
+                secret=config['ARIA2_RPC_TOKEN']
+            )
+        )
+    except Exception as e:
+        logging.error(f"Error connecting to aria2 RPC: {str(e)}")
+        return
+
+    try:
+        aria2.add_uris([download_url], options={
+            'dir': config['ARIA2_DOWNLOAD_DIR'],
+        })
+        logging.info(f"Download started for {download_url}")
+    except Exception as e:
+        logging.error(f"Error adding download to aria2 RPC: {str(e)}")
+
+def download_video_cmd(download_url, config):
     """
     使用命令行工具下载视频
     依赖 aria2c
     """
+    logging.info(f"Downloading video using aria2c: {download_url}")
     try:
         # 你可以根据需要修改命令
         command = [
             'aria2c',
             '-x', '16',
+            '-d', config['ARIA2_DOWNLOAD_DIR'],
             download_url,
         ]
         
@@ -114,27 +152,10 @@ def on_log(client, userdata, paho_log_level, messages):
     if paho_log_level == mqtt.LogLevel.MQTT_LOG_ERR:
         print(messages)
 
-def setup_logging():
-    """配置日志记录"""
-
-    # 确保下载目录存在
-    log_path = "logs"
-    if not os.path.exists(log_path):
-        os.makedirs(log_path)   
-
-    output_path = os.path.join(log_path, 'video_puller.log')
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        # format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(output_path),
-            logging.StreamHandler()
-        ]
-    )
 
 def main():
+    service_name = 'puller'
+
     config = load_config()
     
     # 配置参数
@@ -145,7 +166,7 @@ def main():
     # MQTT_TOPIC_SUBSCRIBE = config['MQTT_TOPIC_SUBSCRIBE']
     MQTT_TOPIC_PUBLISH = config['MQTT_TOPIC_PUBLISH']
     # yymmddhhiiss
-    suffix = time.strftime("_puller_%y%m%d%H%M%S", time.localtime())
+    suffix = time.strftime(f"_{service_name}_%y%m%d%H%M%S", time.localtime())
     MQTT_CLIENT_ID = config['MQTT_CLIENT_ID'] + suffix
     # DOWNLOAD_DIR = config['DOWNLOAD_DIR']
     # DOWNLOAD_PREFIX_URL=config['DOWNLOAD_PREFIX_URL']
@@ -153,14 +174,22 @@ def main():
     MQTT_USERNAME = config.get('MQTT_USERNAME', None)
     MQTT_PASSWORD = config.get('MQTT_PASSWORD', None)
 
+    ARIA2_RPC_ENABLE = config.get('ARIA2_RPC_ENABLE', False)
+
+    ARIA2_RPC_HOST = config['ARIA2_RPC_HOST']
+    ARIA2_RPC_PORT = config['ARIA2_RPC_PORT']
+    ARIA2_RPC_TOKEN = config['ARIA2_RPC_TOKEN']
+    ARIA2_DOWNLOAD_DIR = config['ARIA2_DOWNLOAD_DIR']
+
     # 确保下载目录存在
     # if not os.path.exists(DOWNLOAD_DIR):
     #     os.makedirs(DOWNLOAD_DIR)    
 
     # 设置日志    
-    setup_logging()
+    setup_logging("puller")
 
     # 这里添加你的 MQTT 客户端逻辑
+    print()
     print("Configuration loaded:")
     print(f"MQTT Broker: {MQTT_BROKER}:{MQTT_PORT}")
     print(f"QoS Level: {QOS_LEVEL}")
@@ -168,7 +197,18 @@ def main():
     print(f"Client ID: {MQTT_CLIENT_ID}")
     # print(f"Download Directory: {DOWNLOAD_DIR}")
     # print(f"Download Prefix URL: {DOWNLOAD_PREFIX_URL}")
+    print(f"MQTT Username: {MQTT_USERNAME}")
+    print(f"MQTT Password: {MQTT_PASSWORD}")
+    print(f"ARIA2 RPC Enable: {ARIA2_RPC_ENABLE}")
+    print(f"ARIA2 RPC Host: {ARIA2_RPC_HOST}")
+    print(f"ARIA2 RPC Port: {ARIA2_RPC_PORT}")
+    print(f"ARIA2 RPC Token: {ARIA2_RPC_TOKEN}")
+    print(f"ARIA2 Download Dir: {ARIA2_DOWNLOAD_DIR}")
     print()
+
+    config['MQTT_CLIENT_ID'] = MQTT_CLIENT_ID
+    config['MQTT_USERNAME'] = MQTT_USERNAME
+    config['MQTT_PASSWORD'] = MQTT_PASSWORD
 
     # 创建MQTT客户端
     mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=MQTT_CLIENT_ID, userdata=config)

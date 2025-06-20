@@ -68,14 +68,29 @@
 
 - 自构建
     ```bash
-    # 构建 
-    docker buildx bake
+     # 构建 
+     docker buildx bake
+    ```
 
-    # 运行
-    docker run -d -v $(pwd)/downloads:/app/downloads --name video-downloader video-downloader:local
+    **服务端**
+    ```bash
+     # 运行
+     docker run -d -v $(pwd)/downloads:/app/downloads --name video-downloader video-downloader:local
 
-    # 使用环境变量
-    docker run -d -v $(pwd)/downloads:/app/downloads -e DOWNLOAD_PREFIX_URL="http://127.0.0.1:8080/" --name video-downloader video-downloader:local
+     # 使用环境变量
+     docker run -d -v $(pwd)/downloads:/app/downloads -e DOWNLOAD_PREFIX_URL="http://127.0.0.1:8080/" --name video-downloader video-downloader:local
+    ```
+
+    **客户端**
+    ```bash
+     # 使用外置的 aria2 下载视频
+     docker run -e ARIA2_RPC_HOST=http://192.168.1.138 -e ARIA2_DOWNLOAD_DIR=test_down -it video-downloader:local video-puller --qos-level 2 --aria2-rpc-token your-secret-key --aria2-rpc-enable 1 --aria2-rpc-download-dir test_download
+    
+     # 挂载下载目录
+     docker run -e ARIA2_DOWNLOAD_DIR=test_down -e QOS_LEVEL=2 -v $(pwd)/aria2down:/app/test_down -it video-downloader:local video-puller
+
+     # aria2c rpc server
+     aria2c --enable-rpc --rpc-listen-all=true --rpc-secret=your-secret-key --dir=/downloads
     ```
 
 - 基于 Docker Compose
@@ -112,6 +127,13 @@ DOWNLOAD_DIR = "downloads"
 DOWNLOAD_PREFIX_URL = ""
 MQTT_USERNAME = ""
 MQTT_PASSWORD = ""
+
+[aria2]
+ARIA2_RPC_ENABLE = 0
+ARIA2_RPC_HOST = "http://localhost"
+ARIA2_RPC_PORT = 6800
+ARIA2_RPC_TOKEN = "your-secret-key"
+ARIA2_DOWNLOAD_DIR = "aria_downloads"
 ```
 
 - **DOWNLOAD_PREFIX_URL** 用于替换下载文件的 URL 前缀。   

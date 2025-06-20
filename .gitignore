@@ -17,6 +17,7 @@ wheels/
 # movie files
 movie/
 downloads/
+aria_downloads/
 
 # log
 logs/

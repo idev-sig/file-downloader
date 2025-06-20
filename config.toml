@@ -10,3 +10,10 @@ DOWNLOAD_DIR = "downloads"
 DOWNLOAD_PREFIX_URL=""
 MQTT_USERNAME = ""
 MQTT_PASSWORD = ""
+
+[aria2]
+ARIA2_RPC_ENABLE = 0
+ARIA2_RPC_HOST = "http://localhost"
+ARIA2_RPC_PORT = 6800
+ARIA2_RPC_TOKEN = "your-secret-key"
+ARIA2_DOWNLOAD_DIR = "aria_downloads"

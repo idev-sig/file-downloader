@@ -16,7 +16,13 @@ def load_config():
         'DOWNLOAD_DIR': 'downloads',
         'DOWNLOAD_PREFIX_URL': '',
         'MQTT_USERNAME': None,
-        'MQTT_PASSWORD': None
+        'MQTT_PASSWORD': None,
+
+        'ARIA2_RPC_ENABLE': False,
+        'ARIA2_RPC_HOST': 'http://localhost',
+        'ARIA2_RPC_PORT': 6800,
+        'ARIA2_RPC_TOKEN': '',
+        'ARIA2_DOWNLOAD_DIR': 'aria2_downloads',
     }
 
     # 初始化配置
@@ -27,7 +33,7 @@ def load_config():
         env_value = os.getenv(key)
         if env_value is not None:
             try:
-                if key in ('MQTT_PORT', 'QOS_LEVEL', 'KEEPALIVE'):
+                if key in ('MQTT_PORT', 'QOS_LEVEL', 'KEEPALIVE', 'ARIA2_RPC_PORT', 'ARIA2_RPC_ENABLE'):
                     config[key] = int(env_value)  # 类型转换
                 else:
                     config[key] = env_value
@@ -45,15 +51,30 @@ def load_config():
             for key in default_config:
                 if key in mqtt_section:
                     try:
-                        if key in ('MQTT_PORT', 'QOS_LEVEL'):
+                        if key in ('MQTT_PORT', 'QOS_LEVEL', 'KEEPALIVE'):
                             config[key] = int(mqtt_section[key])  # 类型转换
                         else:
                             config[key] = mqtt_section[key]
                         print(f"Loaded {key} from config file: {mqtt_section[key]}")
                     except ValueError as e:
                         print(f"Invalid value for {key} in {config_file}: {mqtt_section[key]}, error: {e}")
+
+            aria2_rpc_section = file_config.get('aria2', {})
+            for key in default_config:
+                if key in aria2_rpc_section:
+                    try:
+                        if key in ('ARIA2_RPC_PORT', 'ARIA2_RPC_ENABLE'):
+                            config[key] = int(aria2_rpc_section[key])  # 类型转换
+                        else:
+                            config[key] = aria2_rpc_section[key]
+                        print(f"Loaded {key} from config file: {aria2_rpc_section[key]}")
+                    except ValueError as e:
+                        print(f"Invalid value for {key} in {config_file}: {aria2_rpc_section[key]}, error: {e}")
+
         except Exception as e:
             print(f"Failed to load config file {config_file}: {e}")
+
+    print()
 
     # 3. 解析命令行参数（最高优先级）
     parser = argparse.ArgumentParser(description='Video Downloader MQTT Client')
@@ -68,6 +89,11 @@ def load_config():
     parser.add_argument('--download-prefix-url', help='Download prefix URL')
     parser.add_argument('--mqtt-username', help='MQTT username for authentication')
     parser.add_argument('--mqtt-password', help='MQTT password for authentication')
+    parser.add_argument('--aria2-rpc-enable', type=int, help='Enable aria2 RPC (0 or 1)')
+    parser.add_argument('--aria2-rpc-host', help='aria2 RPC host')
+    parser.add_argument('--aria2-rpc-port', type=int, help='aria2 RPC port')
+    parser.add_argument('--aria2-rpc-token', help='aria2 RPC token')
+    parser.add_argument('--aria2-download-dir', help='aria2 RPC download directory')
 
     args = parser.parse_args()
 
@@ -82,6 +108,9 @@ def load_config():
             except ValueError as e:
                 print(f"Invalid command-line argument {arg_key}: {arg_value}, error: {e}")
 
+    # 转换 ARIA2_RPC_ENABLE 为布尔值
+    config['ARIA2_RPC_ENABLE'] = bool(config['ARIA2_RPC_ENABLE'])
+
     # 验证配置
     if config['QOS_LEVEL'] not in (0, 1, 2):
         print(f"Invalid QOS_LEVEL: {config['QOS_LEVEL']}, defaulting to 0")
@@ -89,6 +118,9 @@ def load_config():
     if config['MQTT_PORT'] <= 0 or config['MQTT_PORT'] > 65535:
         print(f"Invalid MQTT_PORT: {config['MQTT_PORT']}, defaulting to 1883")
         config['MQTT_PORT'] = 1883
+    if config['ARIA2_RPC_PORT'] <= 0 or config['ARIA2_RPC_PORT'] > 65535:
+        print(f"Invalid ARIA2_RPC_PORT: {config['ARIA2_RPC_PORT']}, defaulting to 6800")
+        config['ARIA2_RPC_PORT'] = 6800
     if not config['DOWNLOAD_DIR']:
         print("Invalid DOWNLOAD_DIR, defaulting to 'downloads'")
         config['DOWNLOAD_DIR'] = 'downloads'

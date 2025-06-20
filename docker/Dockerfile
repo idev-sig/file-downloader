@@ -18,13 +18,12 @@ COPY pyproject.toml uv.lock ./
 COPY src ./src
 
 RUN apt-get update -y && \
-    apt-get install -y curl
+    apt-get install -y curl aria2
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv lock --no-upgrade && \
     uv sync --locked --no-install-project --no-editable && \
     uv pip install .
-
 
 RUN <<EOF
 M3U8_VERSION=$(curl -sL "${GITHUB_PROXY}https://api.github.com/repos/forkdo/m3u8-downloader/releases/latest" | grep '"tag_name":' | cut -d'"' -f4)
@@ -46,7 +45,13 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 COPY --from=builder --chown=app:app /app/.venv /app/.venv
 COPY --from=builder --chown=app:app /app/m3u8-downloader /usr/local/bin/m3u8-downloader
+COPY --from=builder --chown=app:app /usr/bin/aria2c /usr/local/bin/
 
 WORKDIR /app
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends aria2 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+    
 CMD ["video-downloader"]
