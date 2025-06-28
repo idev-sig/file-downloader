@@ -153,8 +153,29 @@ uv run video-downloader --mqtt-broker mqtt.example.com --mqtt-port 1884
 uv run video-downloader
 ```
 
-## 时序图
-![时序图](screenshots/m3u8-downloader.png)
+## 流程图
+![流程图](screenshots/m3u8-downloader.png)
+
+```mermaid
+flowchart TD
+    A[客户端A] -- 发布下载请求到主题 video/download/request --> M[MQTT 服务器]
+    subgraph VPS 服务器
+      direction TB
+      S1[订阅 video/download/request]
+      S2[解析请求消息，提取 M3U8 地址]
+      S3[下载 M3U8 片段]
+      S4[将 M3U8 的 TS 片段合成 MP4]
+      S5[生成 MP4 下载地址发送到主题 video/download/complete]
+      S1 --> S2 --> S3 --> S4 --> S5
+    end
+    M -- 消息推送到订阅方 --> S1
+
+    S5 --> M2[MQTT 服务器]
+
+    M2 -- 将 MP4 地址消息发布到主题 video/download/complete --> B[客户端B【可选】]
+    B -- 通过本地 aria2c 工具--> L[下载保存 MP4]
+    B -- 通过调用 aria2c RPC 服务 --> L
+```
 
 ## 仓库镜像
 
