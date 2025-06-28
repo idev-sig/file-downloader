@@ -1,4 +1,7 @@
-# MQTT 服务器下载 M3U8 视频文件
+# M3U8 视频下载器
+
+## 介绍
+本项目是基于 MQTT 服务器端的 M3U8 视频下载器。
 
 ## 先决条件
 1. 安装 [uv](https://github.com/astral-sh/uv)。 
@@ -150,14 +153,12 @@ uv run video-downloader --mqtt-broker mqtt.example.com --mqtt-port 1884
 uv run video-downloader
 ```
 
-## 开发
+## 时序图
+![时序图](screenshots/m3u8-downloader.png)
 
-安装开发依赖
-```bash
-uv sync --all-extras
-```
+## 仓库镜像
 
-运行测试
-```bash
-uv run pytest
-```
+- https://git.jetsung.com/idev/video-downloader
+- https://framagit.org/idev/video-downloader
+- https://gitcode.com/idev/video-downloader
+- https://github.com/idevsig/video-downloader
