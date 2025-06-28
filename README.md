@@ -153,9 +153,6 @@ uv run video-downloader --mqtt-broker mqtt.example.com --mqtt-port 1884
 uv run video-downloader
 ```
 
-## 流程图
-![流程图](screenshots/m3u8-downloader.png)
-
 ```mermaid
 flowchart TD
     A[客户端A] -- 发布下载请求到主题 video/download/request --> M[MQTT 服务器]
