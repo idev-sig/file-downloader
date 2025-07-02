@@ -6,6 +6,7 @@ import os
 from urllib.parse import urlparse
 import time
 import logging
+from .logger import setup_logging
 from .config import load_config
 
 """
@@ -157,26 +158,6 @@ def on_log(client, userdata, paho_log_level, messages):
     if paho_log_level == mqtt.LogLevel.MQTT_LOG_ERR:
         print(messages)
 
-def setup_logging():
-    """配置日志记录"""
-
-    # 确保下载目录存在
-    log_path = "logs"
-    if not os.path.exists(log_path):
-        os.makedirs(log_path)   
-
-    output_path = os.path.join(log_path, 'video_downloader.log')
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        # format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(output_path),
-            logging.StreamHandler()
-        ]
-    )
-
 def main():
     config = load_config()
     
@@ -201,7 +182,7 @@ def main():
         os.makedirs(DOWNLOAD_DIR)    
 
     # 设置日志    
-    setup_logging()
+    setup_logging("downloader")
 
     # 这里添加你的 MQTT 客户端逻辑
     print()

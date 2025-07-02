@@ -36,6 +36,9 @@
     ```bash
     uv sync
     uv run video-downloader
+
+    # 支持队列
+    uv run video-downloader
     ```
 3. 使用客户端，发布消息（`JSON`）到主题 `video/download/request`，格式如下：   
 建议 `QOS` 为 `0`, `retain` 为 `false`。若 `retain` 为 `true`，则消息会被保留，直到有新的消息发布到相同的主题。会导致重启服务器后，重复下载相同的文件。
