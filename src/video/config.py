@@ -10,9 +10,9 @@ def load_config():
         'MQTT_PORT': 1883,
         'QOS_LEVEL': 0,
         'KEEPALIVE': 60,
-        'MQTT_TOPIC_SUBSCRIBE': 'video/download/request',
-        'MQTT_TOPIC_PUBLISH': 'video/download/complete',
-        'MQTT_CLIENT_ID': 'video_downloader_client',
+        'TOPIC_SUBSCRIBE': 'video/download/request',
+        'TOPIC_PUBLISH': 'video/download/complete',
+        'CLIENT_ID': 'video_downloader_client',
         'DOWNLOAD_DIR': 'downloads',
         'DOWNLOAD_PREFIX_URL': '',
         'MQTT_USERNAME': None,
@@ -82,8 +82,8 @@ def load_config():
     parser.add_argument('--mqtt-port', type=int, help='MQTT Broker port')
     parser.add_argument('--qos-level', type=int, help='QoS level (0, 1, or 2)')
     parser.add_argument('--keepalive', type=int, help='MQTT Keepalive interval')
-    parser.add_argument('--subscribe-topic', help='MQTT subscribe topic')
-    parser.add_argument('--publish-topic', help='MQTT publish topic')
+    parser.add_argument('--topic-subscribe', help='MQTT subscribe topic')
+    parser.add_argument('--topic-publish', help='MQTT publish topic')
     parser.add_argument('--client-id', help='MQTT client ID')
     parser.add_argument('--download-dir', help='Download directory')
     parser.add_argument('--download-prefix-url', help='Download prefix URL')
@@ -125,4 +125,5 @@ def load_config():
         print("Invalid DOWNLOAD_DIR, defaulting to 'downloads'")
         config['DOWNLOAD_DIR'] = 'downloads'
 
+    print()
     return config

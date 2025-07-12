@@ -20,8 +20,8 @@ def on_connect(client, userdata, flags, rc, *args, **kwargs):
     if rc == 0:
         # 从 userdata 获取配置
         config = userdata['config']
-        client.subscribe(config['MQTT_TOPIC_PUBLISH'], qos=config['QOS_LEVEL'])
-        logging.info(f"Subscribed to topic: {config['MQTT_TOPIC_PUBLISH']} with QoS {config['QOS_LEVEL']}")
+        client.subscribe(config['TOPIC_PUBLISH'], qos=config['QOS_LEVEL'])
+        logging.info(f"Subscribed to topic: {config['TOPIC_PUBLISH']} with QoS {config['QOS_LEVEL']}")
     else:
         logging.error(f"Failed to connect to MQTT broker: {rc}")
 
@@ -170,10 +170,10 @@ def main():
     QOS_LEVEL = config['QOS_LEVEL']
     KEEPALIVE = config['KEEPALIVE']
     # MQTT_TOPIC_SUBSCRIBE = config['MQTT_TOPIC_SUBSCRIBE']
-    MQTT_TOPIC_PUBLISH = config['MQTT_TOPIC_PUBLISH']
+    TOPIC_PUBLISH = config['TOPIC_PUBLISH']
     # yymmddhhiiss
     suffix = time.strftime(f"_{service_name}_%y%m%d%H%M%S", time.localtime())
-    MQTT_CLIENT_ID = config['MQTT_CLIENT_ID'] + suffix
+    CLIENT_ID = config['CLIENT_ID'] + suffix
     # DOWNLOAD_DIR = config['DOWNLOAD_DIR']
     # DOWNLOAD_PREFIX_URL=config['DOWNLOAD_PREFIX_URL']
 
@@ -198,8 +198,8 @@ def main():
     print("::Configuration loaded::")
     print(f"MQTT Broker: {MQTT_BROKER}:{MQTT_PORT}")
     print(f"QoS Level: {QOS_LEVEL}")
-    print(f"Subscribe Topic: {MQTT_TOPIC_PUBLISH}")
-    print(f"Client ID: {MQTT_CLIENT_ID}")
+    print(f"Subscribe Topic: {TOPIC_PUBLISH}")
+    print(f"Client ID: {CLIENT_ID}")
     # print(f"Download Directory: {DOWNLOAD_DIR}")
     # print(f"Download Prefix URL: {DOWNLOAD_PREFIX_URL}")
     print(f"MQTT Username: {MQTT_USERNAME}")
@@ -211,7 +211,7 @@ def main():
     print(f"ARIA2 Download Dir: {ARIA2_DOWNLOAD_DIR}")
     print()
 
-    config['MQTT_CLIENT_ID'] = MQTT_CLIENT_ID
+    config['CLIENT_ID'] = CLIENT_ID
     config['MQTT_USERNAME'] = MQTT_USERNAME
     config['MQTT_PASSWORD'] = MQTT_PASSWORD
 
@@ -226,7 +226,7 @@ def main():
     }    
 
     # 创建MQTT客户端
-    mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=MQTT_CLIENT_ID, userdata=userdata)
+    mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=CLIENT_ID, userdata=userdata)
     mqttc.reconnect_delay_set(min_delay=1, max_delay=120)
 
     # 设置用户名和密码

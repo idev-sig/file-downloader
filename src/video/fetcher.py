@@ -20,8 +20,8 @@ def on_connect(client, userdata, flags, rc, *args, **kwargs):
     logging.info(f"Connected to MQTT broker with result code {rc}")
     if rc == 0:
         config = userdata['config']
-        client.subscribe(config['MQTT_TOPIC_SUBSCRIBE'], qos=config['QOS_LEVEL'])
-        logging.info(f"Subscribed to topic: {config['MQTT_TOPIC_SUBSCRIBE']} with QoS {config['QOS_LEVEL']}")
+        client.subscribe(config['TOPIC_SUBSCRIBE'], qos=config['QOS_LEVEL'])
+        logging.info(f"Subscribed to topic: {config['TOPIC_SUBSCRIBE']} with QoS {config['QOS_LEVEL']}")
     else:
         logging.error(f"Failed to connect to MQTT broker: {rc}")
 
@@ -103,7 +103,7 @@ def process_message(client, config, msg, receive_time):
                 "receive_time": receive_time
             }
             result = client.publish(
-                config['MQTT_TOPIC_PUBLISH'],
+                config['TOPIC_PUBLISH'],
                 json.dumps(complete_msg, ensure_ascii=False),
                 qos=config['QOS_LEVEL']
             )
@@ -122,7 +122,7 @@ def process_message(client, config, msg, receive_time):
                 "receive_time": receive_time
             }
             result = client.publish(
-                config['MQTT_TOPIC_PUBLISH'],
+                config['TOPIC_PUBLISH'],
                 json.dumps(error_msg, ensure_ascii=False),
                 qos=config['QOS_LEVEL']
             )
@@ -167,10 +167,10 @@ def main():
     MQTT_PORT = config['MQTT_PORT']
     QOS_LEVEL = config['QOS_LEVEL']
     KEEPALIVE = config['KEEPALIVE']
-    MQTT_TOPIC_SUBSCRIBE = config['MQTT_TOPIC_SUBSCRIBE']
-    MQTT_TOPIC_PUBLISH = config['MQTT_TOPIC_PUBLISH']
+    TOPIC_SUBSCRIBE = config['TOPIC_SUBSCRIBE']
+    TOPIC_PUBLISH = config['TOPIC_PUBLISH']
     suffix = time.strftime(f"_{service_name}_%y%m%d%H%M%S", time.localtime())
-    MQTT_CLIENT_ID = config['MQTT_CLIENT_ID'] + suffix
+    CLIENT_ID = config['CLIENT_ID'] + suffix
     DOWNLOAD_DIR = config['DOWNLOAD_DIR']
     DOWNLOAD_PREFIX_URL = config['DOWNLOAD_PREFIX_URL']
     MQTT_USERNAME = config.get('MQTT_USERNAME', None)
@@ -187,9 +187,9 @@ def main():
     print("::Configuration loaded::")
     print(f"MQTT Broker: {MQTT_BROKER}:{MQTT_PORT}")
     print(f"QoS Level: {QOS_LEVEL}")
-    print(f"Subscribe Topic: {MQTT_TOPIC_SUBSCRIBE}")
-    print(f"Publish Topic: {MQTT_TOPIC_PUBLISH}")
-    print(f"Client ID: {MQTT_CLIENT_ID}")
+    print(f"Subscribe Topic: {TOPIC_SUBSCRIBE}")
+    print(f"Publish Topic: {TOPIC_PUBLISH}")
+    print(f"Client ID: {CLIENT_ID}")
     print(f"Download Directory: {DOWNLOAD_DIR}")
     print(f"Download Prefix URL: {DOWNLOAD_PREFIX_URL}")
     print()
@@ -205,7 +205,7 @@ def main():
     }
 
     # Create MQTT client
-    mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=MQTT_CLIENT_ID, userdata=userdata)
+    mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=CLIENT_ID, userdata=userdata)
     mqttc.reconnect_delay_set(min_delay=1, max_delay=120)
 
     # Set username and password if provided
