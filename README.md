@@ -13,7 +13,7 @@
     ```bash
     curl -L https://s.fx4.cn/m3u8-downloader | bash
     ```
-3. 安装 [aria2c](https://github.com/aria2/aria2)（下载至本地客户端）。
+3. 安装 [aria2c](https://github.com/aria2/aria2)。
 
 ## 安装
 
@@ -90,7 +90,7 @@
      docker run -e ARIA2_RPC_HOST=http://192.168.1.138 -e ARIA2_DOWNLOAD_DIR=test_down -it file-downloader:local puller --qos 2 --aria2-rpc-token your-secret-key --aria2-rpc-enable 1 --aria2-rpc-download-dir test_download
     
      # 挂载下载目录
-     docker run -e ARIA2_DOWNLOAD_DIR=test_down -e QOS_LEVEL=2 -v $(pwd)/aria2down:/app/test_down -it file-downloader:local puller
+     docker run -e ARIA2_DOWNLOAD_DIR=test_down -e QOS=2 -v $(pwd)/aria2down:/app/test_down -it file-downloader:local puller
 
      # aria2c rpc server
      aria2c --enable-rpc --rpc-listen-all=true --rpc-secret=your-secret-key --dir=/downloads
@@ -158,20 +158,28 @@ uv run fetcher
 flowchart TD
     A[客户端A] -- 发布下载请求到主题 file/download/request --> M[MQTT 服务器]
     subgraph VPS 服务器
-      direction TB
-      S1[订阅 file/download/request]
-      S2[解析请求消息，提取 M3U8 地址]
-      S3[下载 M3U8 片段]
-      S4[将 M3U8 的 TS 片段合成 MP4]
-      S5[生成 MP4 下载地址发送到主题 file/download/complete]
-      S1 --> S2 --> S3 --> S4 --> S5
+        direction TB
+        S1[订阅 file/download/request]
+        S2[解析请求消息，提取 M3U8/HTTP/MAGNET 地址]
+        S3[使用 m3u8-downloader 工具]
+        S4[下载 M3U8 片段]
+        S5[将 M3U8 的 TS 片段合成 MP4]
+        S6[生成 HTTP 下载地址发送到主题 file/download/complete]
+        S7[下载 HTTP 文件]
+        S8[下载 MAGNET 文件]
+        S9[使用 aria2c 工具]
+        
+        S1 --> S2
+        S2 -->|M3U8| S3 --> S4 --> S5 --> S6
+        S2 -->|HTTP| S9 --> S7 --> S6
+        S2 -->|MAGNET| S9 --> S8
     end
     M -- 消息推送到订阅方 --> S1
 
-    S5 --> M2[MQTT 服务器]
+    S6 --> M2[MQTT 服务器]
 
-    M2 -- 将 MP4 地址消息发布到主题 file/download/complete --> B[客户端B【可选】]
-    B -- 通过本地 aria2c 工具--> L[下载保存 MP4]
+    M2 -- 将 HTTP 地址消息发布到主题 file/download/complete --> B[客户端B【可选】]
+    B -- 通过本地 aria2c CL工具--> L[下载保存文件]
     B -- 通过调用 aria2c RPC 服务 --> L
 ```
 
