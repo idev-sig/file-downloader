@@ -145,7 +145,7 @@ ARIA2_DOWNLOAD_DIR = "aria_downloads"
 
 命令行参数:
 ```bash
-uv run fetcher --mqtt-broker mqtt.example.com --mqtt-port 1884
+uv run fetcher --broker mqtt.example.com --port 1884
 ```
 
 ## 运行

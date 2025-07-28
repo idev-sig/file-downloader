@@ -120,6 +120,9 @@ def process_message(client, config, aria2server, msg, receive_time):
         logging.info(f"Extracted URL: {url}, Name: {name}")
         
         filename = name or f"file_{int(time.time())}"
+        # 防止文件名过长，不合法
+        filename = filename[:100]
+
         file_path = download_file(file_type, url, filename, config['DOWNLOAD_DIR'], aria2server)
         if file_path:
             download_http_url = ""
