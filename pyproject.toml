@@ -1,7 +1,7 @@
 [project]
-name = "video-downloader"
+name = "file-downloader"
 version = "0.1.1"
-description = "M3U8 video downloader"
+description = "File downloader"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -11,8 +11,8 @@ dependencies = [
 ]
 
 [project.scripts]
-fetcher = "video.fetcher:main"
-puller = "video.puller:main"
+fetcher = "fetcher:main"
+puller = "puller:main"
 
 [tool.uv]
 package = true

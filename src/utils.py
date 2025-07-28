@@ -1,3 +1,4 @@
+import os
 import re
 from urllib.parse import urlparse
 
@@ -24,3 +25,11 @@ def is_valid_mp4_url(url):
         return all([url_obj.scheme, url_obj.netloc]) and url_obj.path.endswith('.mp4')
     except ValueError:
         return False    
+
+def is_valid_magnet_url(url):
+    """Validate if URL is a valid magnet URL."""
+    return url.startswith('magnet:')
+
+def get_file_suffix(url):
+    """Get file suffix from URL."""
+    return os.path.splitext(url)[-1]

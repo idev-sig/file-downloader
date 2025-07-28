@@ -6,9 +6,10 @@ import time
 import logging
 import queue
 import threading
-from .logger import setup_logging
-from .config import load_config
-from .utils import extract_url_from_text, is_valid_mp4_url
+from aria2s import Aria2cServer
+from logger import setup_logging
+from config import load_config
+from utils import extract_url_from_text, is_valid_magnet_url
 
 """
 下载到本地客户端
@@ -20,8 +21,8 @@ def on_connect(client, userdata, flags, rc, *args, **kwargs):
     if rc == 0:
         # 从 userdata 获取配置
         config = userdata['config']
-        client.subscribe(config['TOPIC_PUBLISH'], qos=config['QOS_LEVEL'])
-        logging.info(f"Subscribed to topic: {config['TOPIC_PUBLISH']} with QoS {config['QOS_LEVEL']}")
+        client.subscribe(config['TOPIC_PUBLISH'], qos=config['QOS'])
+        logging.info(f"Subscribed to topic: {config['TOPIC_PUBLISH']} with QoS {config['QOS']}")
     else:
         logging.error(f"Failed to connect to MQTT broker: {rc}")
 
@@ -35,46 +36,38 @@ def on_message(client, userdata, msg):
     except Exception as e:
         logging.error(f"Error queuing message: {str(e)}")
 
-def download_video(download_url, config):
+def download_file(download_url, config):
     """
-    下载视频
+    下载文件
     """
     if config['ARIA2_RPC_ENABLE']:
-        download_video_aria2_rpc(download_url, config)
+        download_file_aria2_rpc(download_url, config)
     else:
-        download_video_cmd(download_url, config)
+        download_file_aria2c_cmd(download_url, config)
 
-def download_video_aria2_rpc(download_url, config):
+def download_file_aria2_rpc(download_url, config):
     """
-    使用 aria2 RPC 下载视频
+    使用 aria2 RPC 下载文件
+    依赖 aria2c --enable-rpc
     """
-    logging.info(f"Downloading video using aria2 RPC: {download_url}")
+    logging.info(f"Downloading file using aria2 RPC: {download_url}")
     try:
-        aria2 = aria2p.API(
-            aria2p.Client(
-                host=config['ARIA2_RPC_HOST'],
-                port=config['ARIA2_RPC_PORT'],
-                secret=config['ARIA2_RPC_TOKEN']
-            )
-        )
+        save_dir = config.get('ARIA2_DOWNLOAD_DIR', 'aria_downloads')
+        Aria2cServer(
+            host=config.get('ARIA2_RPC_HOST', '127.0.0.1'),
+            port=config.get('ARIA2_RPC_PORT', 6800),
+            secret=config.get('ARIA2_RPC_TOKEN', ''),
+            save_dir=save_dir,
+        ).download(download_url, save_dir)  
     except Exception as e:
-        logging.error(f"Error connecting to aria2 RPC: {str(e)}")
-        return
+        logging.error(f"Error downloading file: {str(e)}")
 
-    try:
-        aria2.add_uris([download_url], options={
-            'dir': config['ARIA2_DOWNLOAD_DIR'],
-        })
-        logging.info(f"Download started for {download_url}")
-    except Exception as e:
-        logging.error(f"Error adding download to aria2 RPC: {str(e)}")
-
-def download_video_cmd(download_url, config):
+def download_file_aria2c_cmd(download_url, config):
     """
-    使用命令行工具下载视频
+    使用命令行工具下载文件
     依赖 aria2c
     """
-    logging.info(f"Downloading video using aria2c: {download_url}")
+    logging.info(f"Downloading file using aria2c: {download_url}")
     try:
         # 你可以根据需要修改命令
         command = [
@@ -92,19 +85,19 @@ def download_video_cmd(download_url, config):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             encoding="utf-8",          # 添加 encoding 时
-            errors="ignore",           # 忽略非法字符            
+            # errors="ignore",           # 忽略非法字符            
             text=True
         )
         
         if result.returncode == 0:
-            logging.info("Video downloaded successfully")
+            logging.info("File downloaded successfully")
             return True
         else:
-            logging.error(f"Failed to download video. Error: {result.stderr}")
+            logging.error(f"Failed to download file. Error: {result.stderr}")
             return None
             
     except Exception as e:
-        logging.error(f"Error downloading video: {str(e)}")
+        logging.error(f"Error downloading file: {str(e)}")
         return None
     
 def process_message(client, config, msg, receive_time):
@@ -125,14 +118,14 @@ def process_message(client, config, msg, receive_time):
             logging.warning("No valid URL found in the message")
             return
         
-        if not is_valid_mp4_url(download_url):
-            logging.warning(f"Invalid MP4 URL: {download_url}")
+        if not is_valid_magnet_url(download_url) and not extract_url_from_text(download_url):
+            logging.warning(f"Invalid URL: {download_url}")
             return
             
         logging.info(f"Download URL: {download_url}")
 
-        # 下载视频
-        download_video(download_url, config)
+        # 下载文件
+        download_file(download_url, config)
             
     except Exception as e:
         logging.error(f"Error processing message: {str(e)}")        
@@ -165,9 +158,9 @@ def main():
     config = load_config()
     
     # 配置参数
-    MQTT_BROKER = config['MQTT_BROKER']
-    MQTT_PORT = config['MQTT_PORT']
-    QOS_LEVEL = config['QOS_LEVEL']
+    BROKER = config['BROKER']
+    PORT = config['PORT']
+    QOS = config['QOS']
     KEEPALIVE = config['KEEPALIVE']
     # MQTT_TOPIC_SUBSCRIBE = config['MQTT_TOPIC_SUBSCRIBE']
     TOPIC_PUBLISH = config['TOPIC_PUBLISH']
@@ -177,9 +170,10 @@ def main():
     # DOWNLOAD_DIR = config['DOWNLOAD_DIR']
     # DOWNLOAD_PREFIX_URL=config['DOWNLOAD_PREFIX_URL']
 
-    MQTT_USERNAME = config.get('MQTT_USERNAME', None)
-    MQTT_PASSWORD = config.get('MQTT_PASSWORD', None)
+    USERNAME = config.get('USERNAME', None)
+    PASSWORD = config.get('PASSWORD', None)
 
+    ARIA2_SERVER_ENABLE = config.get('ARIA2_SERVER_ENABLE', False)
     ARIA2_RPC_ENABLE = config.get('ARIA2_RPC_ENABLE', False)
 
     ARIA2_RPC_HOST = config['ARIA2_RPC_HOST']
@@ -196,14 +190,15 @@ def main():
 
     # 这里添加你的 MQTT 客户端逻辑
     print("::Configuration loaded::")
-    print(f"MQTT Broker: {MQTT_BROKER}:{MQTT_PORT}")
-    print(f"QoS Level: {QOS_LEVEL}")
+    print(f"MQTT Broker: {BROKER}:{PORT}")
+    print(f"QoS Level: {QOS}")
     print(f"Subscribe Topic: {TOPIC_PUBLISH}")
     print(f"Client ID: {CLIENT_ID}")
     # print(f"Download Directory: {DOWNLOAD_DIR}")
     # print(f"Download Prefix URL: {DOWNLOAD_PREFIX_URL}")
-    print(f"MQTT Username: {MQTT_USERNAME}")
-    print(f"MQTT Password: {MQTT_PASSWORD}")
+    print(f"MQTT Username: {USERNAME}")
+    print(f"MQTT Password: {PASSWORD}")
+    print(f"ARIA2 Server Enable: {ARIA2_SERVER_ENABLE}")
     print(f"ARIA2 RPC Enable: {ARIA2_RPC_ENABLE}")
     print(f"ARIA2 RPC Host: {ARIA2_RPC_HOST}")
     print(f"ARIA2 RPC Port: {ARIA2_RPC_PORT}")
@@ -212,8 +207,8 @@ def main():
     print()
 
     config['CLIENT_ID'] = CLIENT_ID
-    config['MQTT_USERNAME'] = MQTT_USERNAME
-    config['MQTT_PASSWORD'] = MQTT_PASSWORD
+    config['USERNAME'] = USERNAME
+    config['PASSWORD'] = PASSWORD
 
     # Create message queue and stop event
     message_queue = queue.Queue()
@@ -230,9 +225,9 @@ def main():
     mqttc.reconnect_delay_set(min_delay=1, max_delay=120)
 
     # 设置用户名和密码
-    if MQTT_USERNAME and MQTT_PASSWORD:
-        mqttc.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
-        logging.info(f"Using MQTT authentication: username={MQTT_USERNAME}")
+    if USERNAME and PASSWORD:
+        mqttc.username_pw_set(USERNAME, PASSWORD)
+        logging.info(f"Using MQTT authentication: username={USERNAME}")
 
     mqttc.on_log = on_log
     mqttc.on_connect = on_connect
@@ -247,8 +242,8 @@ def main():
     processor_thread.start()    
 
     try:
-        mqttc.connect(MQTT_BROKER, MQTT_PORT, keepalive=KEEPALIVE)  # 增加 keepalive
-        logging.info(f"Connecting to MQTT broker: {MQTT_BROKER}:{MQTT_PORT}")
+        mqttc.connect(BROKER, PORT, keepalive=KEEPALIVE)  # 增加 keepalive
+        logging.info(f"Connecting to MQTT broker: {BROKER}:{PORT}")
         mqttc.loop_start()  # 在后台线程运行 MQTT 循环
         while True:
             time.sleep(1)  # 主线程保持运行
@@ -266,5 +261,5 @@ def main():
         logging.info("MQTT client stopped.")
 
 if __name__ == "__main__":
-    print("Starting MQTT video puller client...")
+    print("Starting MQTT file puller client...")
     main()

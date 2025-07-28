@@ -1,7 +1,7 @@
-# M3U8 视频下载器
+# 云端文件下载器
 
 ## 介绍
-本项目是基于 MQTT 服务器端的 M3U8 视频下载器。
+本项目是基于 MQTT 的云端文件下载器。
 
 ## 先决条件
 1. 安装 [uv](https://github.com/astral-sh/uv)。 
@@ -20,7 +20,7 @@
 1. 拉取代码并进入项目目录：
    ```bash
    git clone <repository-url>
-   cd video-downloader
+   cd file-downloader
    ```
 2. 安装依赖：
    ```bash
@@ -37,7 +37,7 @@
     uv sync
     uv run fetcher
     ```
-3. 使用客户端，发布消息（`JSON`）到主题 `video/download/request`，格式如下：   
+3. 使用客户端，发布消息（`JSON`）到主题 `file/download/request`，格式如下：   
 建议 `QOS` 为 `0`, `retain` 为 `false`。若 `retain` 为 `true`，则消息会被保留，直到有新的消息发布到相同的主题。会导致重启服务器后，重复下载相同的文件。
     ```bash
     {
@@ -48,14 +48,14 @@
     若忽略 `name`，则会生成随机文件名。
 
 4. 等待下载完成   
-下载完成后，会发布消息到主题 `video/download/complete`，格式如下：
+下载完成后，会发布消息到主题 `file/download/complete`，格式如下：
     ```json
     {
       "status": "success",
       "url": "https://test.com/wmfx.m3u8",
-      "name": "video_1749464069",
-      "file_path": "downloads/video_1749464069",
-      "download_url": "http://127.0.0.1:3000/video_1749464069.mp4",
+      "name": "file_1749464069",
+      "file_path": "downloads/file_1749464069",
+      "download_url": "http://127.0.0.1:3000/file_1749464069.mp4",
       "timestamp": 1749464116
     }
     ```
@@ -78,19 +78,19 @@
     **服务端**
     ```bash
      # 运行
-     docker run -d -v $(pwd)/downloads:/app/downloads --name video-downloader video-downloader:local
+     docker run -d -v $(pwd)/downloads:/app/downloads --name file-downloader file-downloader:local
 
      # 使用环境变量
-     docker run -d -v $(pwd)/downloads:/app/downloads -e DOWNLOAD_PREFIX_URL="http://127.0.0.1:8080/" --name video-downloader video-downloader:local
+     docker run -d -v $(pwd)/downloads:/app/downloads -e DOWNLOAD_PREFIX_URL="http://127.0.0.1:8080/" --name file-downloader file-downloader:local
     ```
 
     **客户端**
     ```bash
      # 使用外置的 aria2 下载视频
-     docker run -e ARIA2_RPC_HOST=http://192.168.1.138 -e ARIA2_DOWNLOAD_DIR=test_down -it video-downloader:local puller --qos-level 2 --aria2-rpc-token your-secret-key --aria2-rpc-enable 1 --aria2-rpc-download-dir test_download
+     docker run -e ARIA2_RPC_HOST=http://192.168.1.138 -e ARIA2_DOWNLOAD_DIR=test_down -it file-downloader:local puller --qos 2 --aria2-rpc-token your-secret-key --aria2-rpc-enable 1 --aria2-rpc-download-dir test_download
     
      # 挂载下载目录
-     docker run -e ARIA2_DOWNLOAD_DIR=test_down -e QOS_LEVEL=2 -v $(pwd)/aria2down:/app/test_down -it video-downloader:local puller
+     docker run -e ARIA2_DOWNLOAD_DIR=test_down -e QOS_LEVEL=2 -v $(pwd)/aria2down:/app/test_down -it file-downloader:local puller
 
      # aria2c rpc server
      aria2c --enable-rpc --rpc-listen-all=true --rpc-secret=your-secret-key --dir=/downloads
@@ -105,10 +105,10 @@
 
     | Registry                                                                                   | Image                                                  |
     | ------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
-    | [**Docker Hub**](https://hub.docker.com/r/idevsig/video-downloader/)                                | `idevsig/video-downloader`                                    |
-    | [**GitHub Container Registry**](https://github.com/idevsig/video-downloader/pkgs/container/video-downloader) | `ghcr.io/idevsig/video-downloader`                            |
-    | **Tencent Cloud Container Registry**                                                       | `ccr.ccs.tencentyun.com/idevsig/video-downloader`             |
-    | **Aliyun Container Registry**                                                              | `registry.cn-guangzhou.aliyuncs.com/idevsig/video-downloader` |
+    | [**Docker Hub**](https://hub.docker.com/r/idevsig/file-downloader/)                                | `idevsig/file-downloader`                                    |
+    | [**GitHub Container Registry**](https://github.com/idev-sig/file-downloader/pkgs/container/file-downloader) | `ghcr.io/idevsig/file-downloader`                            |
+    | **Tencent Cloud Container Registry**                                                       | `ccr.ccs.tencentyun.com/idevsig/file-downloader`             |
+    | **Aliyun Container Registry**                                                              | `registry.cn-guangzhou.aliyuncs.com/idevsig/file-downloader` |
 
 ## 配置
 
@@ -120,18 +120,19 @@
 配置文件 `config.toml`:
 ```toml
 [mqtt]
-MQTT_BROKER = "mqtt.eclipseprojects.io"
-MQTT_PORT = 1883
-QOS_LEVEL = 0
-MQTT_TOPIC_SUBSCRIBE = "video/download/request"
-MQTT_TOPIC_PUBLISH = "video/download/complete"
-MQTT_CLIENT_ID = "video_downloader_client"
+BROKER = "mqtt.eclipseprojects.io"
+PORT = 1883
+QOS = 0
+TOPIC_SUBSCRIBE = "file/download/request"
+TOPIC_PUBLISH = "file/download/complete"
+CLIENT_ID = "file_downloader_client"
 DOWNLOAD_DIR = "downloads"
 DOWNLOAD_PREFIX_URL = ""
-MQTT_USERNAME = ""
-MQTT_PASSWORD = ""
+USERNAME = ""
+PASSWORD = ""
 
 [aria2]
+ARIA2_SERVER_ENABLE = 0
 ARIA2_RPC_ENABLE = 0
 ARIA2_RPC_HOST = "http://localhost"
 ARIA2_RPC_PORT = 6800
@@ -155,28 +156,28 @@ uv run fetcher
 
 ```mermaid
 flowchart TD
-    A[客户端A] -- 发布下载请求到主题 video/download/request --> M[MQTT 服务器]
+    A[客户端A] -- 发布下载请求到主题 file/download/request --> M[MQTT 服务器]
     subgraph VPS 服务器
       direction TB
-      S1[订阅 video/download/request]
+      S1[订阅 file/download/request]
       S2[解析请求消息，提取 M3U8 地址]
       S3[下载 M3U8 片段]
       S4[将 M3U8 的 TS 片段合成 MP4]
-      S5[生成 MP4 下载地址发送到主题 video/download/complete]
+      S5[生成 MP4 下载地址发送到主题 file/download/complete]
       S1 --> S2 --> S3 --> S4 --> S5
     end
     M -- 消息推送到订阅方 --> S1
 
     S5 --> M2[MQTT 服务器]
 
-    M2 -- 将 MP4 地址消息发布到主题 video/download/complete --> B[客户端B【可选】]
+    M2 -- 将 MP4 地址消息发布到主题 file/download/complete --> B[客户端B【可选】]
     B -- 通过本地 aria2c 工具--> L[下载保存 MP4]
     B -- 通过调用 aria2c RPC 服务 --> L
 ```
 
 ## 仓库镜像
 
-- https://git.jetsung.com/idev/video-downloader
-- https://framagit.org/idev/video-downloader
-- https://gitcode.com/idev/video-downloader
-- https://github.com/idevsig/video-downloader
+- https://git.jetsung.com/idev/file-downloader
+- https://framagit.org/idev/file-downloader
+- https://gitcode.com/idev/file-downloader
+- https://github.com/idev-sig/file-downloader

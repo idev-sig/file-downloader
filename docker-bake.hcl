@@ -20,8 +20,8 @@ target "_image" {
 
 target "_common" {
     labels = {
-        "org.opencontainers.image.source" = "https://git.jetsung.com/idev/video-downloader"
-        "org.opencontainers.image.documentation" = "https://git.jetsung.com/idev/video-downloader"
+        "org.opencontainers.image.source" = "https://git.jetsung.com/idev/file-downloader"
+        "org.opencontainers.image.documentation" = "https://git.jetsung.com/idev/file-downloader"
         "org.opencontainers.image.authors" = "Jetsung Chan<i@jetsung.com>"
     }
     context = "."
@@ -37,7 +37,7 @@ target "default" {
         GITHUB_PROXY = "${GITHUB_PROXY}"
     }    
     tags = [
-      "video-downloader:local",
+      "file-downloader:local",
     ]
 }
 

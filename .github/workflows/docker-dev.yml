@@ -6,7 +6,7 @@ on:
       - dev*
 
 env:
-  package_name: video-downloader
+  package_name: file-downloader
   GHCR_SLUG: ghcr.io/${{ github.repository }}
 
 jobs:
@@ -40,7 +40,7 @@ jobs:
           images: ${{ env.GHCR_SLUG }}
           labels: |
             org.opencontainers.image.title=${{ env.package_name }}
-            org.opencontainers.image.description=${{ env.package_name }} is a video downloader service.
+            org.opencontainers.image.description=${{ env.package_name }} is a file downloader service.
             org.opencontainers.image.vendor=Jetsung Chan
           tags: ${{ matrix.tag }}
 

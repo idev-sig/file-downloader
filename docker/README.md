@@ -6,22 +6,22 @@
 ### Docker Hub
 ```yaml
 services:
-  video-downloader:
-    image: idevsig/video-downloader:latest
-    container_name: video-downloader
+  file-downloader:
+    image: idev-sig/file-downloader:latest
+    container_name: file-downloader
     restart: unless-stopped
     environment:
       - TZ=Asia/Shanghai
-      - MQTT_BROKER="broker.emqx.io"
-      - MQTT_PORT=1883
-      - QOS_LEVEL=2
+      - BROKER="broker.emqx.io"
+      - PORT=1883
+      - QOS=2
       - KEEPALIVE=60
-      - TOPIC_SUBSCRIBE="video/download/request"
-      - TOPIC_PUBLISH="video/download/complete"
-      - CLIENT_ID="video"
+      - TOPIC_SUBSCRIBE="file/download/request"
+      - TOPIC_PUBLISH="file/download/complete"
+      - CLIENT_ID="file"
       - DOWNLOAD_DIR="downloads"
       - DOWNLOAD_PREFIX_URL=""
-      - MQTT_USERNAME=""
-      - MQTT_PASSWORD=""
+      - USERNAME=""
+      - PASSWORD=""
     volumes:
       - ./downloads:/app/downloads

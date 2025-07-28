@@ -6,18 +6,19 @@ def load_config():
     """加载配置，优先级：命令行参数 > 配置文件 > 环境变量 > 默认值"""
     # 默认配置
     default_config = {
-        'MQTT_BROKER': 'test.mosquitto.org',
-        'MQTT_PORT': 1883,
-        'QOS_LEVEL': 0,
+        'BROKER': 'test.mosquitto.org',
+        'PORT': 1883,
+        'QOS': 0,
         'KEEPALIVE': 60,
         'TOPIC_SUBSCRIBE': 'video/download/request',
         'TOPIC_PUBLISH': 'video/download/complete',
         'CLIENT_ID': 'video_downloader_client',
         'DOWNLOAD_DIR': 'downloads',
         'DOWNLOAD_PREFIX_URL': '',
-        'MQTT_USERNAME': None,
-        'MQTT_PASSWORD': None,
+        'USERNAME': None,
+        'PASSWORD': None,
 
+        'ARIA2_SERVER_ENABLE': True,
         'ARIA2_RPC_ENABLE': False,
         'ARIA2_RPC_HOST': 'http://localhost',
         'ARIA2_RPC_PORT': 6800,
@@ -33,7 +34,7 @@ def load_config():
         env_value = os.getenv(key)
         if env_value is not None:
             try:
-                if key in ('MQTT_PORT', 'QOS_LEVEL', 'KEEPALIVE', 'ARIA2_RPC_PORT', 'ARIA2_RPC_ENABLE'):
+                if key in ('PORT', 'QOS', 'KEEPALIVE', 'ARIA2_RPC_PORT', 'ARIA2_SERVER_ENABLE', 'ARIA2_RPC_ENABLE'):
                     config[key] = int(env_value)  # 类型转换
                 else:
                     config[key] = env_value
@@ -51,7 +52,7 @@ def load_config():
             for key in default_config:
                 if key in mqtt_section:
                     try:
-                        if key in ('MQTT_PORT', 'QOS_LEVEL', 'KEEPALIVE'):
+                        if key in ('PORT', 'QOS', 'KEEPALIVE'):
                             config[key] = int(mqtt_section[key])  # 类型转换
                         else:
                             config[key] = mqtt_section[key]
@@ -63,7 +64,7 @@ def load_config():
             for key in default_config:
                 if key in aria2_rpc_section:
                     try:
-                        if key in ('ARIA2_RPC_PORT', 'ARIA2_RPC_ENABLE'):
+                        if key in ('ARIA2_RPC_PORT', 'ARIA2_SERVER_ENABLE', 'ARIA2_RPC_ENABLE'):
                             config[key] = int(aria2_rpc_section[key])  # 类型转换
                         else:
                             config[key] = aria2_rpc_section[key]
@@ -78,17 +79,18 @@ def load_config():
 
     # 3. 解析命令行参数（最高优先级）
     parser = argparse.ArgumentParser(description='Video Downloader MQTT Client')
-    parser.add_argument('--mqtt-broker', help='MQTT Broker address')
-    parser.add_argument('--mqtt-port', type=int, help='MQTT Broker port')
-    parser.add_argument('--qos-level', type=int, help='QoS level (0, 1, or 2)')
+    parser.add_argument('--broker', help='MQTT Broker address')
+    parser.add_argument('--port', type=int, help='MQTT Broker port')
+    parser.add_argument('--qos', type=int, help='QoS level (0, 1, or 2)')
     parser.add_argument('--keepalive', type=int, help='MQTT Keepalive interval')
     parser.add_argument('--topic-subscribe', help='MQTT subscribe topic')
     parser.add_argument('--topic-publish', help='MQTT publish topic')
     parser.add_argument('--client-id', help='MQTT client ID')
     parser.add_argument('--download-dir', help='Download directory')
     parser.add_argument('--download-prefix-url', help='Download prefix URL')
-    parser.add_argument('--mqtt-username', help='MQTT username for authentication')
-    parser.add_argument('--mqtt-password', help='MQTT password for authentication')
+    parser.add_argument('--username', help='MQTT username for authentication')
+    parser.add_argument('--password', help='MQTT password for authentication')
+    parser.add_argument('--aria2-server-enable', type=int, help='Enable aria2 server (0 or 1)')
     parser.add_argument('--aria2-rpc-enable', type=int, help='Enable aria2 RPC (0 or 1)')
     parser.add_argument('--aria2-rpc-host', help='aria2 RPC host')
     parser.add_argument('--aria2-rpc-port', type=int, help='aria2 RPC port')
@@ -112,12 +114,12 @@ def load_config():
     config['ARIA2_RPC_ENABLE'] = bool(config['ARIA2_RPC_ENABLE'])
 
     # 验证配置
-    if config['QOS_LEVEL'] not in (0, 1, 2):
-        print(f"Invalid QOS_LEVEL: {config['QOS_LEVEL']}, defaulting to 0")
-        config['QOS_LEVEL'] = 0
-    if config['MQTT_PORT'] <= 0 or config['MQTT_PORT'] > 65535:
-        print(f"Invalid MQTT_PORT: {config['MQTT_PORT']}, defaulting to 1883")
-        config['MQTT_PORT'] = 1883
+    if config['QOS'] not in (0, 1, 2):
+        print(f"Invalid QOS: {config['QOS']}, defaulting to 0")
+        config['QOS'] = 0
+    if config['PORT'] <= 0 or config['PORT'] > 65535:
+        print(f"Invalid PORT: {config['PORT']}, defaulting to 1883")
+        config['PORT'] = 1883
     if config['ARIA2_RPC_PORT'] <= 0 or config['ARIA2_RPC_PORT'] > 65535:
         print(f"Invalid ARIA2_RPC_PORT: {config['ARIA2_RPC_PORT']}, defaulting to 6800")
         config['ARIA2_RPC_PORT'] = 6800
