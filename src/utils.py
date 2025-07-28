@@ -35,31 +35,22 @@ def get_file_suffix(url):
     """Get file suffix from URL."""
     return os.path.splitext(url)[-1]
 
-def truncate_filename(filename, max_bytes=255):
-    """Truncate filename to max_bytes."""
-    # 分离主文件名和扩展名
+def truncate_filename(filename: str, max_bytes=230) -> str:
     name, ext = os.path.splitext(filename)
-    
-    # 系统类型判断（Windows/macOS: 按字符；Linux: 按字节）
+
     system = platform.system()
-    if system in ['Windows', 'Darwin']:
-        max_len = 255
-        name_max_len = max_len - len(ext)
-        if len(filename) <= max_len:
+    if system in ['Windows', 'Darwin']:  # Windows/macOS: 按字符计数
+        max_chars = 255 - len(ext)
+        if len(filename) <= 255:
             return filename
-        return name[:name_max_len] + ext
+        return name[:max_chars] + ext
     else:
-        # Linux/ext4: 按字节截取
+        # Linux/ext4: 按 UTF-8 字节计数
         name_bytes = name.encode('utf-8')
         ext_bytes = ext.encode('utf-8')
         max_name_bytes = max_bytes - len(ext_bytes)
 
-        # 截断 name_bytes 到 max_name_bytes
-        truncated_name = b''
-        for char in name:
-            char_bytes = char.encode('utf-8')
-            if len(truncated_name) + len(char_bytes) > max_name_bytes:
-                break
-            truncated_name += char_bytes
-
-        return truncated_name.decode('utf-8', errors='ignore') + ext
+        # 截取字节，保留完整 UTF-8 字符
+        truncated_name_bytes = name_bytes[:max_name_bytes]
+        safe_name = truncated_name_bytes.decode('utf-8', errors='ignore')
+        return safe_name + ext

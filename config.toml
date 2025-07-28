@@ -1,3 +1,6 @@
+[setting]
+M3U8_TOOL = "" # m3u8-downloader, vsd 
+
 [mqtt]
 BROKER = "broker.emqx.io"
 PORT = 1883
@@ -7,7 +10,7 @@ TOPIC_SUBSCRIBE = "file/download/request"
 TOPIC_PUBLISH = "file/download/complete"
 CLIENT_ID = "file"
 DOWNLOAD_DIR = "downloads"
-DOWNLOAD_PREFIX_URL="http://us.222029.xyz:38515/"
+DOWNLOAD_PREFIX_URL=""
 USERNAME = ""
 PASSWORD = ""
 

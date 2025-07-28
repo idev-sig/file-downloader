@@ -6,6 +6,8 @@ def load_config():
     """加载配置，优先级：命令行参数 > 配置文件 > 环境变量 > 默认值"""
     # 默认配置
     default_config = {
+        'M3U8_TOOL': 'm3u8-downloader',
+
         'BROKER': 'test.mosquitto.org',
         'PORT': 1883,
         'QOS': 0,
@@ -48,6 +50,13 @@ def load_config():
         try:
             with open(config_file, 'r', encoding='utf-8') as f:
                 file_config = toml.load(f)
+
+            setting_section = file_config.get('setting', {})
+            for key in default_config:
+                if key in setting_section:
+                    config[key] = setting_section[key]
+                    print(f"Loaded {key} from config file: {setting_section[key]}")
+
             mqtt_section = file_config.get('mqtt', {})
             for key in default_config:
                 if key in mqtt_section:
@@ -96,6 +105,7 @@ def load_config():
     parser.add_argument('--aria2-rpc-port', type=int, help='aria2 RPC port')
     parser.add_argument('--aria2-rpc-token', help='aria2 RPC token')
     parser.add_argument('--aria2-download-dir', help='aria2 RPC download directory')
+    parser.add_argument('--m3u8-tool', help='M3U8 download tool (m3u8-downloader, vsd)')
 
     args = parser.parse_args()
 

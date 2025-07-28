@@ -38,10 +38,10 @@ def on_message(client, userdata, msg):
         logging.error(f"Error queuing message: {str(e)}")
 
 
-def download_file(ftype, url, output, save_dir, aria2server):
+def download_file(ftype, url, output, save_dir, aria2server, m3u8_tool = "m3u8-downloader"):
     """Download file using m3u8-downloader."""
     if ftype == "m3u8":
-        return download_file_m3u8(url, output.replace(".mp4", ""), save_dir)
+        return download_file_m3u8(url, output.replace(".mp4", ""), save_dir, m3u8_tool)
     else:
         # 如果不是磁力链接，则判断 output 后缀是否与 url 的后缀相同，若不同，则以 url 的文件后缀为准
         if not is_valid_magnet_url(url):
@@ -62,19 +62,28 @@ def download_file_aria2(url, output, save_dir, aria2server: Aria2cServer):
     except Exception as e:
         logging.error(f"Error downloading file: {str(e)}")    
 
-def download_file_m3u8(url, output, save_dir = ""):
+def download_file_m3u8(url, output, save_dir = "", tool="m3u8-downloader"):
     """Download file using m3u8-downloader."""
     try:
-        command = ['m3u8-downloader', '-u', url, '-o', output]
-        if save_dir:
-            command.extend(['-sp', save_dir])
+        if tool == "vsd":
+            command = ['vsd', 'save', url]
+            output_ext = output + ".mp4"
+            if save_dir:
+                command.extend(['-d', save_dir])
+                output_ext = os.path.join(save_dir, output_ext)
+            command.extend(['-o', output_ext])
+        else:
+            command = ['m3u8-downloader', '-u', url, '-o', output]
+            if save_dir:
+                command.extend(['-sp', save_dir])
+
         logging.info(f"Executing command: {' '.join(command)}")
         result = subprocess.run(
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             encoding="utf-8",
-            # errors="ignore",
+            errors="ignore",
             text=True
         )
         if result.returncode == 0:
@@ -85,6 +94,9 @@ def download_file_m3u8(url, output, save_dir = ""):
             return None
     except Exception as e:
         logging.error(f"Error downloading file: {str(e)}")
+        lines = (result.stdout + result.stderr).splitlines()
+        error_lines = [line for line in lines if "error:" in line.lower()]
+        print(error_lines)
         return None
 
 def process_message(client, config, aria2server, msg, receive_time):
@@ -120,10 +132,10 @@ def process_message(client, config, aria2server, msg, receive_time):
         logging.info(f"Extracted URL: {url}, Name: {name}")
         
         filename = name or f"file_{int(time.time())}"
-        # 防止文件名过长，导致处理失败
+        # 文件太长，导致处理失败，需要截断
         filename = truncate_filename(filename)
 
-        file_path = download_file(file_type, url, filename, config['DOWNLOAD_DIR'], aria2server)
+        file_path = download_file(file_type, url, filename, config['DOWNLOAD_DIR'], aria2server, config['M3U8_TOOL'])
         if file_path:
             download_http_url = ""
             if not is_valid_magnet_url(url) and config.get('DOWNLOAD_PREFIX_URL'):

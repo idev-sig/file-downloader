@@ -4,7 +4,7 @@
 本项目是基于 MQTT 的云端文件下载器。
 
 ## 先决条件
-1. 安装 [uv](https://github.com/astral-sh/uv)。 
+1. 安装 [`uv`](https://github.com/astral-sh/uv)。 
     ```bash
     # On macOS and Linux.
     curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -13,7 +13,11 @@
     ```bash
     curl -L https://s.fx4.cn/m3u8-downloader | bash
     ```
-3. 安装 [aria2c](https://github.com/aria2/aria2)。
+   （可选安装） [`vsd`](https://github.com/forkdo/vsd) 和 [`ffmpeg`](https://ffmpeg.org/download.html)   
+   > **M3U8_MODE** 模式必装。   
+   > 主要是 `m3u8-downloader` 存在问题。当 URL 带参数时，下载的文件不完整。如 `&expires=1753720620&token_path=%2F` 之类的。   
+   > **Docker 镜像默认不安装，可自行手动安装**
+3. 安装 [`aria2c`](https://github.com/aria2/aria2)。
 
 ## 安装
 
